@@ -1,0 +1,52 @@
+[
+    {
+        "id": "1ca8d353-cefb-4b7a-ad4e-55cf7c7a5c82",
+        "nombre": "Mix Secos sin Sal",
+        "ingredientes": [
+            {
+                "productoId": "b58f1491-00ec-449f-9183-127d932a1b1e",
+                "porcentaje": 17
+            },
+            {
+                "productoId": "08babece-bdc3-4aa7-8cd6-53d660699eda",
+                "porcentaje": 22
+            },
+            {
+                "productoId": "8e4d5a30-7f10-477a-b104-9310238dcf68",
+                "porcentaje": 27
+            },
+            {
+                "productoId": "fcb791ad-a871-4c4c-bcb7-d73389891522",
+                "porcentaje": 34
+            }
+        ],
+        "precioVentaKg": 14000,
+        "createdAt": "2026-06-16",
+        "updatedAt": "2026-06-16"
+    },
+    {
+        "id": "d4d13392-7de2-44ba-a290-752e3bcd690e",
+        "nombre": "Mix Cervecero",
+        "ingredientes": [
+            {
+                "productoId": "c0c0fe74-1ff8-4b34-8b20-70f35e613075",
+                "porcentaje": 30
+            },
+            {
+                "productoId": "c6c30b66-29a8-4d65-aad9-e9c9ae1869f9",
+                "porcentaje": 40
+            },
+            {
+                "productoId": "65417c55-fa9c-4225-8a12-34e29800f887",
+                "porcentaje": 15
+            },
+            {
+                "productoId": "7e393766-bb09-412a-af82-b3001b8e7d40",
+                "porcentaje": 15
+            }
+        ],
+        "precioVentaKg": 10000,
+        "createdAt": "2026-06-16",
+        "updatedAt": "2026-06-16"
+    }
+]

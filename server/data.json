@@ -1,0 +1,251 @@
+{
+  "productos": [
+    {
+      "id": "7e393766-bb09-412a-af82-b3001b8e7d40",
+      "nombre": "Castañas Caju con sal",
+      "categoria": "nueces",
+      "stockKg": 4,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16T23:01:13.583Z"
+    },
+    {
+      "id": "8e4d5a30-7f10-477a-b104-9310238dcf68",
+      "nombre": "Castañas Caju sin sal",
+      "categoria": "nueces",
+      "stockKg": 5,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "b58f1491-00ec-449f-9183-127d932a1b1e",
+      "nombre": "Almendras",
+      "categoria": "nueces",
+      "stockKg": 10,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "c6c30b66-29a8-4d65-aad9-e9c9ae1869f9",
+      "nombre": "Mani Tostado con sal",
+      "categoria": "nueces",
+      "stockKg": 5,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "fcb791ad-a871-4c4c-bcb7-d73389891522",
+      "nombre": "Mani Tostado sin Sal",
+      "categoria": "nueces",
+      "stockKg": 5,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "c0c0fe74-1ff8-4b34-8b20-70f35e613075",
+      "nombre": "Maiz Frito",
+      "categoria": "nueces",
+      "stockKg": 20,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "1da8d470-0a65-4c69-8cd8-27d52ffb0453",
+      "nombre": "Maiz Frito Mostaza Miel",
+      "categoria": "nueces",
+      "stockKg": 1,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "4db6e1cd-6fbf-4a2c-a038-864493aa1b8c",
+      "nombre": "Nuez Mariposa",
+      "categoria": "nueces",
+      "stockKg": 10,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "08babece-bdc3-4aa7-8cd6-53d660699eda",
+      "nombre": "Nuez Partida",
+      "categoria": "nueces",
+      "stockKg": 15,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "65417c55-fa9c-4225-8a12-34e29800f887",
+      "nombre": "Semillas Girasol",
+      "categoria": "nueces",
+      "stockKg": 22,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    }
+  ],
+  "mixes": [
+    {
+      "id": "1ca8d353-cefb-4b7a-ad4e-55cf7c7a5c82",
+      "nombre": "Mix Secos sin Sal",
+      "ingredientes": [
+        {
+          "productoId": "b58f1491-00ec-449f-9183-127d932a1b1e",
+          "porcentaje": 17
+        },
+        {
+          "productoId": "08babece-bdc3-4aa7-8cd6-53d660699eda",
+          "porcentaje": 22
+        },
+        {
+          "productoId": "8e4d5a30-7f10-477a-b104-9310238dcf68",
+          "porcentaje": 27
+        },
+        {
+          "productoId": "fcb791ad-a871-4c4c-bcb7-d73389891522",
+          "porcentaje": 34
+        }
+      ],
+      "precioVentaKg": 14000,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "d4d13392-7de2-44ba-a290-752e3bcd690e",
+      "nombre": "Mix Cervecero",
+      "ingredientes": [
+        {
+          "productoId": "c0c0fe74-1ff8-4b34-8b20-70f35e613075",
+          "porcentaje": 30
+        },
+        {
+          "productoId": "c6c30b66-29a8-4d65-aad9-e9c9ae1869f9",
+          "porcentaje": 40
+        },
+        {
+          "productoId": "65417c55-fa9c-4225-8a12-34e29800f887",
+          "porcentaje": 15
+        },
+        {
+          "productoId": "7e393766-bb09-412a-af82-b3001b8e7d40",
+          "porcentaje": 15
+        }
+      ],
+      "precioVentaKg": 10000,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    },
+    {
+      "id": "54d9972c-6d27-4a00-a7d8-b95b64dcdc05",
+      "nombre": "Mix Premium sin Mani",
+      "ingredientes": [
+        {
+          "productoId": "8e4d5a30-7f10-477a-b104-9310238dcf68",
+          "porcentaje": 40
+        },
+        {
+          "productoId": "b58f1491-00ec-449f-9183-127d932a1b1e",
+          "porcentaje": 30
+        },
+        {
+          "productoId": "4db6e1cd-6fbf-4a2c-a038-864493aa1b8c",
+          "porcentaje": 30
+        }
+      ],
+      "precioVentaKg": 22000,
+      "createdAt": "2026-06-16",
+      "updatedAt": "2026-06-16"
+    }
+  ],
+  "compras": [
+    {
+      "id": "21643a17-24db-4913-9421-4dd6d26d1e1a",
+      "productoId": "7e393766-bb09-412a-af82-b3001b8e7d40",
+      "cantidadKg": 5,
+      "costoKg": 14400,
+      "costoTotal": 72000,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    },
+    {
+      "id": "3906cd9e-34c6-4583-a700-d6ec0e0bf4c3",
+      "productoId": "8e4d5a30-7f10-477a-b104-9310238dcf68",
+      "cantidadKg": 5,
+      "costoKg": 14400,
+      "costoTotal": 72000,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    },
+    {
+      "id": "827424b9-88b4-4322-b272-522f5c2e585b",
+      "productoId": "b58f1491-00ec-449f-9183-127d932a1b1e",
+      "cantidadKg": 10,
+      "costoKg": 17300,
+      "costoTotal": 173000,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    },
+    {
+      "id": "85eba355-aa79-4b3e-ad23-a31f767d786b",
+      "productoId": "c6c30b66-29a8-4d65-aad9-e9c9ae1869f9",
+      "cantidadKg": 5,
+      "costoKg": 1950,
+      "costoTotal": 9750,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    },
+    {
+      "id": "df9dd314-d4be-40d2-8492-3c8e8c2a69fc",
+      "productoId": "fcb791ad-a871-4c4c-bcb7-d73389891522",
+      "cantidadKg": 5,
+      "costoKg": 1950,
+      "costoTotal": 9750,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    },
+    {
+      "id": "78e05d8e-967b-469c-a502-68d90f6b5024",
+      "productoId": "c0c0fe74-1ff8-4b34-8b20-70f35e613075",
+      "cantidadKg": 20,
+      "costoKg": 8500,
+      "costoTotal": 170000,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    },
+    {
+      "id": "6a698519-4d7c-47c8-986f-96da237f0e3f",
+      "productoId": "1da8d470-0a65-4c69-8cd8-27d52ffb0453",
+      "cantidadKg": 1,
+      "costoKg": 9100,
+      "costoTotal": 9100,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    },
+    {
+      "id": "b30c9fc3-850d-44e2-8926-5aa88827b87d",
+      "productoId": "4db6e1cd-6fbf-4a2c-a038-864493aa1b8c",
+      "cantidadKg": 10,
+      "costoKg": 13800,
+      "costoTotal": 138000,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    },
+    {
+      "id": "40f2ef7d-ca3a-418c-bc8e-5b6d0b01c07b",
+      "productoId": "08babece-bdc3-4aa7-8cd6-53d660699eda",
+      "cantidadKg": 15,
+      "costoKg": 8400,
+      "costoTotal": 126000,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    },
+    {
+      "id": "9dd572d5-8d9b-43ea-808b-5218abafe024",
+      "productoId": "65417c55-fa9c-4225-8a12-34e29800f887",
+      "cantidadKg": 22,
+      "costoKg": 2625,
+      "costoTotal": 57750,
+      "proveedor": "Carga inicial",
+      "fecha": "2026-06-16"
+    }
+  ],
+  "ventas": [],
+  "gastos": []
+}
