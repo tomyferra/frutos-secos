@@ -1,6 +1,6 @@
 # FrutosSecos
 
-Sistema de gestión de inventario y ventas para frutos secos. Aplicación web con React + TypeScript + Vite y backend Express.
+Sistema de gestión de inventario y ventas para frutos secos. Aplicación web con React + TypeScript + Vite + Supabase.
 
 ## Funcionalidades
 
@@ -14,35 +14,42 @@ Sistema de gestión de inventario y ventas para frutos secos. Aplicación web co
 ## Stack
 
 - **Frontend:** React 19, TypeScript 6, Vite 8, Tailwind CSS, React Router, React Hook Form + Zod, Recharts
-- **Backend:** Express 5, Node.js
+- **Backend:** Supabase (PostgreSQL, API REST, autenticación)
 - **UI:** Radix UI primitives, Lucide icons, shadcn/ui components
 
-## Comandos
+## Setup
 
 ```bash
-npm run dev          # Inicia cliente y servidor (concurrently)
-npm run dev:client   # Solo Vite (localhost:5173)
-npm run dev:server   # Solo Express (localhost:3001)
-npm run build        # TypeScript check + build de producción
-npm run preview      # Preview del build
+npm install
 ```
+
+Copiar `.env` (pedir las variables a un compañero) y luego:
+
+```bash
+npm run dev          # Solo Vite (localhost:5173)
+npm run build        # TypeScript check + build de producción
+```
+
+## Migración a Supabase
+
+1. Crear las tablas ejecutando `supabase/migrations/00001_schema.sql` en el SQL Editor
+2. Cargar datos iniciales con `supabase/seed.sql`
 
 ## Estructura
 
 ```
 frutos-secos/
-├── server/
-│   ├── index.js        # Express API (CRUD sobre data.json)
-│   └── data.json       # Persistencia en archivo
+├── supabase/
+│   ├── migrations/   # SQL de creación de tablas
+│   └── seed.sql      # Datos iniciales
 ├── src/
-│   ├── components/     # Componentes UI reutilizables
-│   ├── hooks/          # Custom hooks (toast)
+│   ├── components/   # Componentes UI reutilizables
+│   ├── hooks/        # Custom hooks (toast)
 │   ├── lib/
-│   │   ├── types.ts    # Tipos compartidos y utilidades
-│   │   ├── store.ts    # Hooks de datos con fetch a API
-│   │   └── utils.ts    # Utilidades de Tailwind
-│   └── pages/          # Páginas de la aplicación
+│   │   ├── supabase.ts  # Cliente Supabase
+│   │   ├── types.ts     # Tipos compartidos y utilidades
+│   │   ├── store.ts     # Hooks de datos con Supabase
+│   │   └── utils.ts     # Utilidades de Tailwind
+│   └── pages/        # Páginas de la aplicación
 └── public/
 ```
-
-Los datos se persisten en `server/data.json`. No requiere base de datos.

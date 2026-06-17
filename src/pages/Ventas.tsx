@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react"
 import { useVentas, useProductos, useMixes } from "@/lib/store"
-import { formatearDinero, formatearPeso } from "@/lib/types"
+import { formatearDinero } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
