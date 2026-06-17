@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Toaster } from "@/components/ui/toaster"
@@ -16,11 +17,21 @@ import Planificar from "@/pages/Planificar"
 import PnL from "@/pages/PnL"
 
 function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <main className="flex-1 p-8 bg-background">
+      <div className="flex min-h-screen w-full">
+        <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/50 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        <main className="flex-1 p-4 md:p-8 pt-16 md:pt-8 bg-background min-w-0">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/productos" element={<Productos />} />

@@ -65,8 +65,7 @@ export default function PnL() {
       fecha: string
       tipo: "compra" | "venta" | "gasto"
       descripcion: string
-      ingreso: number
-      egreso: number
+      monto: number
     }[] = []
 
     for (const c of compras) {
@@ -76,8 +75,7 @@ export default function PnL() {
         fecha: c.fecha,
         tipo: "compra",
         descripcion: `Compra: ${prod?.nombre ?? "—"} (${c.proveedor || "sin proveedor"})`,
-        ingreso: 0,
-        egreso: c.costoTotal,
+        monto: -c.costoTotal,
       })
     }
 
@@ -90,8 +88,7 @@ export default function PnL() {
         fecha: v.fecha,
         tipo: "venta",
         descripcion: `Venta: ${nombre} (${v.cantidad} ${v.unidad})`,
-        ingreso: v.totalVenta,
-        egreso: 0,
+        monto: v.totalVenta,
       })
     }
 
@@ -101,8 +98,7 @@ export default function PnL() {
         fecha: g.fecha,
         tipo: "gasto",
         descripcion: `Gasto: ${g.descripcion} (${g.cantidad}x ${formatearDinero(g.monto)})`,
-        ingreso: 0,
-        egreso: g.monto * g.cantidad,
+        monto: -(g.monto * g.cantidad),
       })
     }
 
@@ -259,7 +255,7 @@ export default function PnL() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="min-w-0">
         <CardHeader>
           <CardTitle>Todas las Operaciones</CardTitle>
         </CardHeader>
@@ -273,15 +269,14 @@ export default function PnL() {
                   <TableHead>Fecha</TableHead>
                   <TableHead>Descripción</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Ingreso</TableHead>
-                  <TableHead className="text-right">Egreso</TableHead>
+                  <TableHead className="text-right">Monto</TableHead>
                   <TableHead className="text-right"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {todasLasTransacciones.map((t) => (
                   <TableRow key={t.id}>
-                    <TableCell className="text-xs">{t.fecha}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{t.fecha}</TableCell>
                     <TableCell className="font-medium">{t.descripcion}</TableCell>
                     <TableCell>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -294,11 +289,8 @@ export default function PnL() {
                         {t.tipo === "venta" ? "Venta" : t.tipo === "compra" ? "Compra" : "Gasto"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right text-green-600">
-                      {t.ingreso > 0 ? formatearDinero(t.ingreso) : ""}
-                    </TableCell>
-                    <TableCell className="text-right text-red-600">
-                      {t.egreso > 0 ? formatearDinero(t.egreso) : ""}
+                    <TableCell className={`text-right font-medium tabular-nums ${t.monto >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      {t.monto >= 0 ? "+" : ""}{formatearDinero(Math.abs(t.monto))}
                     </TableCell>
                     <TableCell className="text-right">
                       {t.tipo === "gasto" && (

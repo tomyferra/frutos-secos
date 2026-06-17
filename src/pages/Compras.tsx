@@ -106,7 +106,7 @@ export default function Compras() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Nueva Compra</CardTitle>
           </CardHeader>
@@ -167,7 +167,7 @@ export default function Compras() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Historial de Compras</CardTitle>
           </CardHeader>
