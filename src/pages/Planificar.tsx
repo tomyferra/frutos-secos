@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useProductos, useMixes, useCompras } from "@/lib/store"
 import { formatearDinero, formatearPeso, calcularCostoMixKg } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
-import { Calculator, TrendingUp, DollarSign, Package, AlertTriangle, RotateCcw, ClipboardList, Percent } from "lucide-react"
+import { Calculator, TrendingUp, DollarSign, Package, AlertTriangle, RotateCcw, ClipboardList, Percent, ShoppingBag, Layers } from "lucide-react"
 
 function redondearMedio(v: number): number {
   return Math.round(v * 2) / 2
@@ -62,6 +62,16 @@ export default function Planificar() {
 
   const [cantidades, setCantidades] = useState<Record<string, number>>({})
   const [errores, setErrores] = useState<Record<string, string>>({})
+
+  const [prodCantidades, setProdCantidades] = useState<Record<string, number>>({})
+  const [prodPrecios, setProdPrecios] = useState<Record<string, string>>({})
+
+  const costoPromedioKg = useCallback((productoId: string) => {
+    const comprasProd = compras.filter((c) => c.productoId === productoId)
+    const totalKg = comprasProd.reduce((s, c) => s + c.cantidadKg, 0)
+    const totalCosto = comprasProd.reduce((s, c) => s + c.costoTotal, 0)
+    return totalKg > 0 ? totalCosto / totalKg : 0
+  }, [compras])
 
   const validar = (mixId: string, kg: number, pendientes: Record<string, number>) => {
     const mix = mixes.find((m) => m.id === mixId)
@@ -150,6 +160,13 @@ export default function Planificar() {
       }
     }
 
+    for (const p of productos) {
+      const kg = prodCantidades[p.id] || 0
+      if (kg > 0) {
+        consumido[p.id] = (consumido[p.id] || 0) + kg
+      }
+    }
+
     return productos.map((p) => ({
       id: p.id,
       nombre: p.nombre,
@@ -157,11 +174,36 @@ export default function Planificar() {
       consumido: consumido[p.id] || 0,
       stockFinal: p.stockKg - (consumido[p.id] || 0),
     }))
-  }, [productos, planes, cantidades, mixes])
+  }, [productos, planes, cantidades, mixes, prodCantidades])
 
-  const totalIngreso = resultados.reduce((s, r) => s + r.ingresoTotal, 0)
-  const totalCosto = resultados.reduce((s, r) => s + r.costoTotal, 0)
-  const totalGanancia = resultados.reduce((s, r) => s + r.gananciaTotal, 0)
+  const prodResultados = useMemo(() => {
+    return productos.map((p) => {
+      const kg = prodCantidades[p.id] || 0
+      const precioVenta = parseFloat(prodPrecios[p.id]) || 0
+      const costoKg = costoPromedioKg(p.id)
+      return {
+        id: p.id,
+        nombre: p.nombre,
+        kg,
+        precioVenta,
+        totalVenta: kg * precioVenta,
+        costoTot: kg * costoKg,
+        ganancia: kg * (precioVenta - costoKg),
+      }
+    })
+  }, [productos, prodCantidades, prodPrecios, costoPromedioKg])
+
+  const totalIngresoMix = resultados.reduce((s, r) => s + r.ingresoTotal, 0)
+  const totalCostoMix = resultados.reduce((s, r) => s + r.costoTotal, 0)
+  const totalGananciaMix = resultados.reduce((s, r) => s + r.gananciaTotal, 0)
+
+  const totalIngresoProd = prodResultados.reduce((s, r) => s + r.totalVenta, 0)
+  const totalCostoProd = prodResultados.reduce((s, r) => s + r.costoTot, 0)
+  const totalGananciaProd = prodResultados.reduce((s, r) => s + r.ganancia, 0)
+
+  const totalIngreso = totalIngresoMix + totalIngresoProd
+  const totalCosto = totalCostoMix + totalCostoProd
+  const totalGanancia = totalGananciaMix + totalGananciaProd
   const margenGlobal = totalCosto > 0 ? (totalGanancia / totalCosto) * 100 : 0
   const hayError = Object.values(errores).some(Boolean)
 
@@ -182,6 +224,8 @@ export default function Planificar() {
           onClick={() => {
             setCantidades({})
             setErrores({})
+            setProdCantidades({})
+            setProdPrecios({})
           }}
         >
           <RotateCcw className="h-4 w-4 mr-1" /> Reset
@@ -239,14 +283,115 @@ export default function Planificar() {
         </Card>
       </div>
 
-      {planes.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <p>No hay mezclas para planificar.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
+      {/* Productos individuales */}
+      {productos.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+            <h3 className="text-lg font-semibold tracking-tight">Productos Individuales</h3>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {productos.map((p) => {
+              const kg = prodCantidades[p.id] || 0
+              const precioVenta = parseFloat(prodPrecios[p.id]) || 0
+              const costoKg = costoPromedioKg(p.id)
+              const totalVenta = kg * precioVenta
+              const totalCosto = kg * costoKg
+              const ganancia = totalVenta - totalCosto
+              const stockSuficiente = kg <= p.stockKg
+
+              return (
+                <Card key={p.id} className="min-w-0">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-sm">{p.nombre}</CardTitle>
+                        <p className="text-xs text-muted-foreground">
+                          Stock: {formatearPeso(p.stockKg)}
+                        </p>
+                      </div>
+                      {costoKg > 0 && (
+                        <Badge variant="outline" className="text-xs">
+                          Costo: {formatearDinero(costoKg)}/kg
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Venta por kg ($)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={prodPrecios[p.id] || ""}
+                          onChange={(e) =>
+                            setProdPrecios((prev) => ({ ...prev, [p.id]: e.target.value }))
+                          }
+                          placeholder="Precio"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Cantidad (kg)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={prodCantidades[p.id] || ""}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value)
+                            setProdCantidades((prev) => ({
+                              ...prev,
+                              [p.id]: isNaN(val) || val < 0 ? 0 : val,
+                            }))
+                          }}
+                          placeholder="0"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {!stockSuficiente && kg > 0 && (
+                      <div className="flex items-center gap-1 text-xs text-destructive">
+                        <AlertTriangle className="h-3 w-3" />
+                        Stock insuficiente — disponible: {formatearPeso(p.stockKg)}
+                      </div>
+                    )}
+
+                    {kg > 0 && precioVenta > 0 && stockSuficiente && (
+                      <div className="rounded-md border border-green-200 bg-green-50 p-2 space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Venta</span>
+                          <span className="font-medium">{formatearDinero(totalVenta)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Costo</span>
+                          <span className="font-medium">{formatearDinero(totalCosto)}</span>
+                        </div>
+                        <Separator className="my-1" />
+                        <div className="flex justify-between text-xs font-bold text-green-700">
+                          <span>Ganancia</span>
+                          <span>{formatearDinero(ganancia)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Mezclas */}
+      {planes.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Layers className="h-5 w-5 text-muted-foreground" />
+            <h3 className="text-lg font-semibold tracking-tight">Mezclas</h3>
+          </div>
           {planes.map((plan, i) => {
           const res = resultados[i]
           const error = errores[plan.mixId]
@@ -275,7 +420,6 @@ export default function Planificar() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Selector de cantidad */}
                 <div className="flex items-end gap-4">
                   <div className="space-y-1">
                     <Label htmlFor={`kg-${plan.mixId}`}>Cantidad a producir (kg)</Label>
@@ -306,7 +450,6 @@ export default function Planificar() {
                   )}
                 </div>
 
-                {/* KPIs de la mezcla */}
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Costo/kg</span>
@@ -324,7 +467,6 @@ export default function Planificar() {
 
                 <Separator />
 
-                {/* Detalle de ingredientes: stock inicial vs final */}
                 {res.kg > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-2">Stock de ingredientes</p>
@@ -357,41 +499,41 @@ export default function Planificar() {
             </Card>
           )
         })}
-
-          {/* Resumen de stock de todos los productos */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-muted-foreground" />
-                <CardTitle>Stock Final por Producto</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {stockFinalProductos.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between text-sm">
-                    <span>{p.nombre}</span>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="text-muted-foreground">
-                        Inicial: {formatearPeso(p.stockInicial)}
-                      </span>
-                      {p.consumido > 0 && (
-                        <span className="text-muted-foreground">
-                          − {formatearPeso(p.consumido)}
-                        </span>
-                      )}
-                      <span className="text-muted-foreground">→</span>
-                      <span className={p.stockFinal < 0.01 ? "text-destructive font-medium" : "text-green-600 font-medium"}>
-                        {formatearPeso(Math.max(0, p.stockFinal))}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </>
+        </div>
       )}
+
+      {/* Resumen de stock de todos los productos */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-muted-foreground" />
+            <CardTitle>Stock Final por Producto</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {stockFinalProductos.map((p) => (
+              <div key={p.id} className="flex items-center justify-between text-sm">
+                <span>{p.nombre}</span>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-muted-foreground">
+                    Inicial: {formatearPeso(p.stockInicial)}
+                  </span>
+                  {p.consumido > 0 && (
+                    <span className="text-muted-foreground">
+                      − {formatearPeso(p.consumido)}
+                    </span>
+                  )}
+                  <span className="text-muted-foreground">→</span>
+                  <span className={p.stockFinal < 0.01 ? "text-destructive font-medium" : "text-green-600 font-medium"}>
+                    {formatearPeso(Math.max(0, p.stockFinal))}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
