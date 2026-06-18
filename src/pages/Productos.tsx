@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { useProductos, useMixes } from "@/lib/store"
-import { formatearPeso, CATEGORIAS } from "@/lib/types"
+import { formatearPeso, formatearDinero, CATEGORIAS } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -73,6 +73,7 @@ export default function Productos() {
                   <TableHead>Producto</TableHead>
                   <TableHead>Categoría</TableHead>
                   <TableHead>Stock</TableHead>
+                  <TableHead>Precio venta</TableHead>
                   <TableHead>Usado en</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
@@ -90,6 +91,9 @@ export default function Productos() {
                         <span className={p.stockKg < 1 ? "text-amber-600 font-medium" : ""}>
                           {formatearPeso(p.stockKg)}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {p.precioVentaKg > 0 ? formatearDinero(p.precioVentaKg) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell>
                         {mixesDelProducto.length === 0 ? (

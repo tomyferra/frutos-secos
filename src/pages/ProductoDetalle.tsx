@@ -26,6 +26,12 @@ export default function ProductoDetalle() {
 
   const producto = productos.find((p) => p.id === id)
 
+  // Mixes que usan este producto (must be before any early return for hooks consistency)
+  const mixesConEste = useMemo(
+    () => producto ? mixes.filter((m) => m.ingredientes.some((ing) => ing.productoId === producto.id)) : [],
+    [mixes, producto?.id]
+  )
+
   if (loadProd || loadComp || loadMixes) return <Loading mensaje="Cargando..." />
 
   if (!producto) {
@@ -44,12 +50,6 @@ export default function ProductoDetalle() {
   const totalKgComprados = compras.reduce((s, c) => s + c.cantidadKg, 0)
   const costoPromedio = totalKgComprados > 0 ? totalInvertido / totalKgComprados : 0
   const catLabel = CATEGORIAS.find((c) => c.value === producto.categoria)?.label ?? producto.categoria
-
-  // Mixes que usan este producto
-  const mixesConEste = useMemo(
-    () => mixes.filter((m) => m.ingredientes.some((ing) => ing.productoId === producto.id)),
-    [mixes, producto.id]
-  )
 
   const handleEliminar = () => {
     if (confirm(`¿Eliminar "${producto.nombre}" permanentemente?`)) {
@@ -72,6 +72,7 @@ export default function ProductoDetalle() {
           <p className="text-muted-foreground">
             {formatearPeso(producto.stockKg)} en stock
             {costoPromedio > 0 && ` · Costo promedio: ${formatearDinero(costoPromedio)} / kg`}
+            {producto.precioVentaKg > 0 && ` · Precio venta: ${formatearDinero(producto.precioVentaKg)} / kg`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -85,7 +86,7 @@ export default function ProductoDetalle() {
       </div>
 
       {/* KPIs del producto */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Total Invertido</CardTitle>
@@ -108,6 +109,16 @@ export default function ProductoDetalle() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatearDinero(costoPromedio)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Precio Venta</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {producto.precioVentaKg > 0 ? formatearDinero(producto.precioVentaKg) : <span className="text-muted-foreground text-lg">—</span>}
+            </div>
           </CardContent>
         </Card>
       </div>

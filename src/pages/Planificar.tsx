@@ -218,6 +218,17 @@ export default function Planificar() {
   const [optimizeOpen, setOptimizeOpen] = useState(false)
   const [optPrices, setOptPrices] = useState<Record<string, string>>({})
 
+  interface ReportItem { nombre: string; inicial: number; mixKg: number; prodKg: number; final: number }
+  interface ReportData {
+    mixes: { nombre: string; kg: number; precioVenta: number; costoKg: number }[]
+    productos: ReportItem[]
+    prodVentas: { nombre: string; kg: number; precio: number; costo: number }[]
+    ingresoMix: number; costoMix: number
+    ingresoProd: number; costoProd: number
+  }
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportData, setReportData] = useState<ReportData | null>(null)
+
   const handleOptimize = () => {
     const prices: Record<string, number> = {}
     for (const p of productos) {
@@ -237,10 +248,15 @@ export default function Planificar() {
     let activeMixes = [...mixes]
     while (activeMixes.length > 0) {
       let maxEqualKg = Infinity
+      const ratioSum: Record<string, number> = {}
       for (const mix of activeMixes) {
         for (const ing of mix.ingredientes) {
-          const ratio = ing.porcentaje / 100
-          const maxForThis = remaining[ing.productoId] / ratio
+          ratioSum[ing.productoId] = (ratioSum[ing.productoId] || 0) + ing.porcentaje / 100
+        }
+      }
+      for (const [prodId, totalRatio] of Object.entries(ratioSum)) {
+        if (totalRatio > 0) {
+          const maxForThis = remaining[prodId] / totalRatio
           if (maxForThis < maxEqualKg) maxEqualKg = maxForThis
         }
       }
@@ -290,6 +306,59 @@ export default function Planificar() {
     setProdCantidades(newProdCant)
     setProdPrecios(newProdPrices)
     setOptimizeOpen(false)
+
+    // Build report
+    const initialStock: Record<string, number> = {}
+    for (const p of productos) initialStock[p.id] = p.stockKg
+
+    const mixConsumed: Record<string, number> = {}
+    for (const mix of mixes) {
+      const kg = newCantidades[mix.id] || 0
+      for (const ing of mix.ingredientes) {
+        mixConsumed[ing.productoId] = (mixConsumed[ing.productoId] || 0) + kg * (ing.porcentaje / 100)
+      }
+    }
+
+    let ingresoMix = 0, costoMix = 0
+    const mixReport: ReportData["mixes"] = []
+    for (const mix of mixes) {
+      const kg = newCantidades[mix.id] || 0
+      if (kg > 0) {
+        const costoKg = calcularCostoMixKg(mix.ingredientes, compras)
+        const ingreso = kg * mix.precioVentaKg
+        const costo = kg * costoKg
+        ingresoMix += ingreso; costoMix += costo
+        mixReport.push({ nombre: mix.nombre, kg, precioVenta: mix.precioVentaKg, costoKg })
+      }
+    }
+
+    let ingresoProd = 0, costoProd = 0
+    const prodVentas: ReportData["prodVentas"] = []
+    for (const p of productos) {
+      const kg = newProdCant[p.id] || 0
+      if (kg > 0) {
+        const costoKg = costoPromedioKg(p.id)
+        const ingreso = kg * prices[p.id]
+        const costo = kg * costoKg
+        ingresoProd += ingreso; costoProd += costo
+        prodVentas.push({ nombre: p.nombre, kg, precio: prices[p.id], costo: costoKg })
+      }
+    }
+
+    const prodReport: ReportItem[] = productos.map((p) => {
+      const cons = mixConsumed[p.id] || 0
+      const prodK = newProdCant[p.id] || 0
+      return {
+        nombre: p.nombre,
+        inicial: initialStock[p.id],
+        mixKg: cons,
+        prodKg: prodK,
+        final: initialStock[p.id] - cons - prodK,
+      }
+    })
+
+    setReportData({ mixes: mixReport, productos: prodReport, prodVentas, ingresoMix, costoMix, ingresoProd, costoProd })
+    setReportOpen(true)
     toast({ title: "Plan optimizado", description: "Las cantidades se ajustaron para minimizar stock remanente." })
   }
 
@@ -310,7 +379,7 @@ export default function Planificar() {
             size="sm"
             onClick={() => {
               const initial: Record<string, string> = {}
-              for (const p of productos) initial[p.id] = ""
+              for (const p of productos) initial[p.id] = p.precioVentaKg > 0 ? String(p.precioVentaKg) : ""
               setOptPrices(initial)
               setOptimizeOpen(true)
             }}
@@ -652,7 +721,7 @@ export default function Planificar() {
                     ({formatearDinero(costoPromedioKg(p.id))}/kg)
                   </span>
                 </Label>
-                <div className="relative w-20">
+                <div className="relative w-28">
                   <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                   <Input
                     type="number"
@@ -672,6 +741,120 @@ export default function Planificar() {
             <Button onClick={handleOptimize}>
               <Sparkles className="h-4 w-4 mr-1" /> Calcular
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Reporte de optimización</DialogTitle>
+            <DialogDescription>
+              Plan generado para minimizar el stock remanente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {reportData && (
+            <div className="space-y-5">
+              {/* Mixes */}
+              {reportData.mixes.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-1.5"><Layers className="h-4 w-4" /> Mezclas a producir</h4>
+                  <div className="text-sm space-y-1">
+                    {reportData.mixes.map((m) => (
+                      <div key={m.nombre} className="flex justify-between">
+                        <span>{m.nombre}</span>
+                        <span className="text-muted-foreground">{formatearPeso(m.kg)} kg × ${m.precioVenta.toFixed(2)}/kg</span>
+                      </div>
+                    ))}
+                    <Separator />
+                    <div className="flex justify-between font-medium">
+                      <span>Ingreso mixes</span>
+                      <span className="text-green-600">{formatearDinero(reportData.ingresoMix)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Costo mixes</span>
+                      <span>{formatearDinero(reportData.costoMix)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Productos individuales */}
+              {reportData.prodVentas.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-1.5"><ShoppingBag className="h-4 w-4" /> Productos a vender</h4>
+                  <div className="text-sm space-y-1">
+                    {reportData.prodVentas.map((p) => (
+                      <div key={p.nombre} className="flex justify-between">
+                        <span>{p.nombre}</span>
+                        <span className="text-muted-foreground">{formatearPeso(p.kg)} kg × ${p.precio.toFixed(2)}/kg</span>
+                      </div>
+                    ))}
+                    <Separator />
+                    <div className="flex justify-between font-medium">
+                      <span>Ingreso productos</span>
+                      <span className="text-green-600">{formatearDinero(reportData.ingresoProd)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Costo productos</span>
+                      <span>{formatearDinero(reportData.costoProd)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Resumen financiero */}
+              <div>
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-1.5"><TrendingUp className="h-4 w-4" /> Resumen financiero</h4>
+                <div className="text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span>Ingreso total</span>
+                    <span className="text-green-600 font-medium">{formatearDinero(reportData.ingresoMix + reportData.ingresoProd)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Costo total</span>
+                    <span>{formatearDinero(reportData.costoMix + reportData.costoProd)}</span>
+                  </div>
+                  <div className="flex justify-between font-medium">
+                    <span>Ganancia total</span>
+                    <span className={reportData.ingresoMix + reportData.ingresoProd - reportData.costoMix - reportData.costoProd >= 0 ? "text-green-600" : "text-destructive"}>
+                      {formatearDinero(reportData.ingresoMix + reportData.ingresoProd - reportData.costoMix - reportData.costoProd)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Margen</span>
+                    <span>{((reportData.ingresoMix + reportData.ingresoProd - reportData.costoMix - reportData.costoProd) / (reportData.costoMix + reportData.costoProd) * 100).toFixed(1)}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Stock final */}
+              <div>
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-1.5"><Package className="h-4 w-4" /> Stock final por producto</h4>
+                <div className="text-sm space-y-1">
+                  {reportData.productos.map((p) => (
+                    <div key={p.nombre} className="grid grid-cols-[1fr_auto] gap-4 items-center">
+                      <span>{p.nombre}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatearPeso(p.inicial)} kg
+                        {p.mixKg > 0 && <span className="text-amber-600"> −{formatearPeso(p.mixKg)} (mix)</span>}
+                        {p.prodKg > 0 && <span className="text-blue-600"> −{formatearPeso(p.prodKg)} (directo)</span>}
+                        {p.final > 0 ? <span className="text-green-600"> = {formatearPeso(p.final)} kg</span> : <span className="text-destructive"> = 0 kg</span>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button onClick={() => setReportOpen(false)}>Cerrar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

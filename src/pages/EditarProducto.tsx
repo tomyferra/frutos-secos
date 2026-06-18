@@ -16,10 +16,13 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "@/hooks/use-toast"
+import { useEffect } from "react"
+import { Loading } from "@/components/ui/loading"
 
 const schema = z.object({
   nombre: z.string().min(1, "El nombre es obligatorio"),
   categoria: z.string().min(1, "Seleccioná una categoría"),
+  precioVentaKg: z.coerce.number().min(0, "El precio no puede ser negativo"),
 })
 
 type FormData = z.infer<typeof schema>
@@ -27,7 +30,7 @@ type FormData = z.infer<typeof schema>
 export default function EditarProducto() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { productos, actualizar } = useProductos()
+  const { productos, loading, actualizar } = useProductos()
 
   const producto = productos.find((p) => p.id === id)
 
@@ -36,13 +39,20 @@ export default function EditarProducto() {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    values: producto
-      ? { nombre: producto.nombre, categoria: producto.categoria }
-      : undefined,
+    defaultValues: { nombre: "", categoria: "", precioVentaKg: 0 },
   })
+
+  useEffect(() => {
+    if (producto) {
+      reset({ nombre: producto.nombre, categoria: producto.categoria, precioVentaKg: producto.precioVentaKg })
+    }
+  }, [producto, reset])
+
+  if (loading) return <Loading mensaje="Cargando producto..." />
 
   if (!producto) {
     return (
@@ -61,6 +71,7 @@ export default function EditarProducto() {
     actualizar(producto.id, {
       nombre: data.nombre,
       categoria: data.categoria as Categoria,
+      precioVentaKg: data.precioVentaKg,
     })
     toast({ title: "Producto actualizado", description: `${data.nombre} modificado correctamente.` })
     navigate(`/productos/${producto.id}`)
@@ -106,6 +117,21 @@ export default function EditarProducto() {
               </Select>
               {errors.categoria && (
                 <p className="text-sm text-destructive">{errors.categoria.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="precioVentaKg">Precio de venta por kg ($)</Label>
+              <Input
+                id="precioVentaKg"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Ej: 2500"
+                {...register("precioVentaKg")}
+              />
+              {errors.precioVentaKg && (
+                <p className="text-sm text-destructive">{errors.precioVentaKg.message}</p>
               )}
             </div>
 

@@ -12,6 +12,7 @@ export interface Producto {
   nombre: string
   categoria: Categoria
   stockKg: number
+  precioVentaKg: number
   createdAt: string
   updatedAt: string
 }

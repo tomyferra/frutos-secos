@@ -23,6 +23,7 @@ const schema = z.object({
   categoria: z.string().min(1, "Seleccioná una categoría"),
   stockKg: z.coerce.number().min(0, "El stock no puede ser negativo"),
   costoKg: z.coerce.number().min(0, "El costo no puede ser negativo").optional(),
+  precioVentaKg: z.coerce.number().min(0, "El precio no puede ser negativo").optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -39,7 +40,7 @@ export default function NuevoProducto() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { nombre: "", categoria: "", stockKg: 0, costoKg: 0 },
+    defaultValues: { nombre: "", categoria: "", stockKg: 0, costoKg: 0, precioVentaKg: 0 },
   })
 
   const categoria = watch("categoria")
@@ -54,6 +55,7 @@ export default function NuevoProducto() {
       nombre: data.nombre,
       categoria: data.categoria as Categoria,
       stockKg: data.stockKg,
+      precioVentaKg: data.precioVentaKg ?? 0,
       createdAt: hoy(),
       updatedAt: hoy(),
     })
@@ -152,6 +154,21 @@ export default function NuevoProducto() {
                 <p className="text-xs text-muted-foreground">
                   Total: {formatearDinero(stockKg * costoKg!)}
                 </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="precioVentaKg">Precio de venta por kg ($)</Label>
+              <Input
+                id="precioVentaKg"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Ej: 2500"
+                {...register("precioVentaKg")}
+              />
+              {errors.precioVentaKg && (
+                <p className="text-sm text-destructive">{errors.precioVentaKg.message}</p>
               )}
             </div>
 
