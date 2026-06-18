@@ -8,7 +8,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
-import { Calculator, TrendingUp, DollarSign, Package, AlertTriangle, RotateCcw, ClipboardList, Percent, ShoppingBag, Layers } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
+import {
+  Calculator, TrendingUp, DollarSign, Package, AlertTriangle,
+  RotateCcw, ClipboardList, Percent, ShoppingBag, Layers, Sparkles,
+} from "lucide-react"
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 function redondearMedio(v: number): number {
   return Math.round(v * 2) / 2
@@ -207,6 +215,84 @@ export default function Planificar() {
   const margenGlobal = totalCosto > 0 ? (totalGanancia / totalCosto) * 100 : 0
   const hayError = Object.values(errores).some(Boolean)
 
+  const [optimizeOpen, setOptimizeOpen] = useState(false)
+  const [optPrices, setOptPrices] = useState<Record<string, string>>({})
+
+  const handleOptimize = () => {
+    const prices: Record<string, number> = {}
+    for (const p of productos) {
+      const v = parseFloat(optPrices[p.id])
+      if (!v || v <= 0) {
+        toast({ title: "Faltan precios", description: `Ingresá el precio de venta de "${p.nombre}"`, variant: "destructive" })
+        return
+      }
+      prices[p.id] = v
+    }
+
+    const remaining: Record<string, number> = {}
+    for (const p of productos) remaining[p.id] = p.stockKg
+
+    const mixTotals: Record<string, number> = {}
+
+    let activeMixes = [...mixes]
+    while (activeMixes.length > 0) {
+      let maxEqualKg = Infinity
+      for (const mix of activeMixes) {
+        for (const ing of mix.ingredientes) {
+          const ratio = ing.porcentaje / 100
+          const maxForThis = remaining[ing.productoId] / ratio
+          if (maxForThis < maxEqualKg) maxEqualKg = maxForThis
+        }
+      }
+
+      maxEqualKg = Math.floor(maxEqualKg * 2) / 2
+
+      if (maxEqualKg >= 0.5) {
+        for (const mix of activeMixes) {
+          mixTotals[mix.id] = (mixTotals[mix.id] || 0) + maxEqualKg
+          for (const ing of mix.ingredientes) {
+            remaining[ing.productoId] -= maxEqualKg * (ing.porcentaje / 100)
+          }
+        }
+      }
+
+      const next: typeof mixes = []
+      for (const mix of activeMixes) {
+        let can = true
+        for (const ing of mix.ingredientes) {
+          const needed = 0.5 * (ing.porcentaje / 100)
+          if (remaining[ing.productoId] < needed - 0.001) { can = false; break }
+        }
+        if (can) next.push(mix)
+      }
+
+      if (next.length === activeMixes.length && maxEqualKg < 0.5) break
+      activeMixes = next
+    }
+
+    const newCantidades: Record<string, number> = {}
+    for (const mix of mixes) {
+      newCantidades[mix.id] = redondearMedio(mixTotals[mix.id] || 0)
+    }
+
+    const newProdCant: Record<string, number> = {}
+    const newProdPrices: Record<string, string> = {}
+    for (const p of productos) {
+      newProdPrices[p.id] = String(prices[p.id])
+      const avail = remaining[p.id]
+      if (avail >= 0.5) {
+        newProdCant[p.id] = Math.floor(avail * 2) / 2
+      }
+    }
+
+    setCantidades(newCantidades)
+    setErrores({})
+    setProdCantidades(newProdCant)
+    setProdPrecios(newProdPrices)
+    setOptimizeOpen(false)
+    toast({ title: "Plan optimizado", description: "Las cantidades se ajustaron para minimizar stock remanente." })
+  }
+
   if (loadProd || loadMix || loadComp) return <Loading mensaje="Calculando plan..." />
 
   return (
@@ -215,21 +301,35 @@ export default function Planificar() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Planificar Producción</h2>
           <p className="text-muted-foreground">
-            Elegí cuántos kg producir de cada mezcla
+            Planificá ventas de mezclas y productos individuales
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setCantidades({})
-            setErrores({})
-            setProdCantidades({})
-            setProdPrecios({})
-          }}
-        >
-          <RotateCcw className="h-4 w-4 mr-1" /> Reset
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => {
+              const initial: Record<string, string> = {}
+              for (const p of productos) initial[p.id] = ""
+              setOptPrices(initial)
+              setOptimizeOpen(true)
+            }}
+          >
+            <Sparkles className="h-4 w-4 mr-1" /> Optimizar Ventas
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCantidades({})
+              setErrores({})
+              setProdCantidades({})
+              setProdPrecios({})
+            }}
+          >
+            <RotateCcw className="h-4 w-4 mr-1" /> Reset
+          </Button>
+        </div>
       </div>
 
       {/* Resumen global */}
@@ -534,6 +634,47 @@ export default function Planificar() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={optimizeOpen} onOpenChange={setOptimizeOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Precios de venta</DialogTitle>
+            <DialogDescription>
+              Ingresá el precio de venta por kg de cada producto para calcular el plan óptimo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {productos.map((p) => (
+              <div key={p.id} className="grid grid-cols-[1fr_auto] gap-3 items-center">
+                <Label className="text-sm flex items-center gap-2">
+                  {p.nombre}
+                  <span className="text-xs text-muted-foreground font-normal">
+                    ({formatearDinero(costoPromedioKg(p.id))}/kg)
+                  </span>
+                </Label>
+                <div className="relative w-20">
+                  <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={optPrices[p.id] ?? ""}
+                    onChange={(e) => setOptPrices((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                    className="pl-5 h-8 text-sm"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOptimizeOpen(false)}>Cancelar</Button>
+            <Button onClick={handleOptimize}>
+              <Sparkles className="h-4 w-4 mr-1" /> Calcular
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
